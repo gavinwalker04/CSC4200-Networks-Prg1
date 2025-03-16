@@ -38,16 +38,27 @@ def handle_clients(conn, addr):
 
     connected = True
     while connected:
-        msg_length = conn.recv(HEADER).decode(FORMAT) # Gets length of message
-
+        msg_length = conn.recv(HEADER).decode(FORMAT)  # Get message length
         if msg_length:
-            msg_length = int(msg_length) # Makes length into a int
-            msg = conn.recv(msg_length).decode(FORMAT) # Gets actual message
-            print(f"{addr} : {msg}") # prints the message
+            msg_length = int(msg_length)
+            encrypted_msg = conn.recv(msg_length)  # Receive encrypted message
+            
+            try:
+                decrypted_msg = decrypt(encrypted_msg, KEY)  # Decrypt message
+                print(f"{addr} : {decrypted_msg}")  # Print decrypted message
+            except Exception as e:
+                print(f"[ERROR] Failed to decrypt message from {addr}: {e}")
+                continue
 
-            if msg == DISCONNECT_MESSAGE:
+            # Handle disconnect message
+            if decrypted_msg == DISCONNECT_MESSAGE:
                 connected = False
-                print(f"{addr} : {msg}")
+                print(f"{addr} : {decrypted_msg}")
+
+            # Send encrypted acknowledgment
+            ack_message = "Message received"
+            encrypted_ack = encrypt(ack_message, KEY)
+            conn.send(encrypted_ack)  # Send encrypted acknowledgment
 
     conn.close()
 
