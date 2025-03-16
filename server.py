@@ -47,6 +47,10 @@ def handle_clients(conn, addr):
             try:
                 decrypted_msg = decrypt(encrypted_msg, KEY)  # Decrypt message
                 print(f"{addr} : {decrypted_msg}")  # Print decrypted message
+
+                with open("server_logs.txt", "a") as log_file:
+                    log_file.write(f"{addr} : {decrypted_msg}\n")
+
             except Exception as e:
                 print(f"[ERROR] Failed to decrypt message from {addr}: {e}")
                 continue
