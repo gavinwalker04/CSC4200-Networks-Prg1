@@ -9,6 +9,8 @@ HEADER = 64
 PORT = 5050
 HOST = socket.gethostbyname(socket.gethostname())
 FORMAT = 'utf-8'
+ADDR = (HOST, PORT)
 DISCONNECT_MESSAGE = "!DISCONNECT"
 
-socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client.connect(ADDR)
