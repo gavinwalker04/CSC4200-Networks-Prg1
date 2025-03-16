@@ -33,13 +33,19 @@ def decrypt(ciphertext, key):
     plaintext = unpad(cipher.decrypt(ciphertext[16:]), AES.block_size)
     return plaintext.decode()
 
-def send(msg):
-    message = msg.encode(FORMAT)
-    msg_length = len(message)
-    send_length = str(msg_length).encode(FORMAT)
+# Function to send encrypted messages to the server
+def send_message(client, message):
+    encrypted_message = encrypt(message, KEY)  # Encrypt message
+    msg_length = str(len(encrypted_message)).encode(FORMAT)
+    msg_length += b' ' * (HEADER - len(msg_length))  # Pad message length
+    client.send(msg_length)
+    client.send(encrypted_message)  # Send encrypted data
 
-    send_length += b' ' * (HEADER - len(send_length))
-    client.send(send_length)
-    client.send(message)
-
-send("Hello World")
+# Function to receive encrypted responses from the server
+def receive_message(client):
+    try:
+        encrypted_response = client.recv(1024)  # Receive encrypted acknowledgment
+        decrypted_response = decrypt(encrypted_response, KEY)  # Decrypt response
+        print(f"[*] Server Response: {decrypted_response}")
+    except Exception as e:
+        print(f"[ERROR] Failed to decrypt server response: {e}")
