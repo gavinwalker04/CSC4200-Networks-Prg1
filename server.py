@@ -39,8 +39,9 @@ def handle_clients(conn, addr):
 
     connected = True
     while connected:
-        msg_length = conn.recv(HEADER).decode(FORMAT)  # Get message length
-        if msg_length:
+        try:
+            msg_length = conn.recv(HEADER).decode(FORMAT)  # Get message length
+            
             msg_length = int(msg_length)
             encrypted_msg = conn.recv(msg_length)  # Receive encrypted message
             
@@ -63,6 +64,15 @@ def handle_clients(conn, addr):
             ack_message = "Message received"
             encrypted_ack = encrypt(ack_message, KEY)
             conn.send(encrypted_ack)  # Send encrypted acknowledgment
+
+        # Prevents a crash when a client unexpectedly disconnects
+        except ConnectionError:
+            print(f"Error! Client {addr} disconnected unexpectedly")
+            break
+
+        except Exception as e:
+            print(f"Error! Unexpected error from {addr}: {e}")
+            break
 
     conn.close()
 
