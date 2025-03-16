@@ -11,3 +11,12 @@ ADDR = (HOST, PORT)
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind(ADDR)
+
+def handle_clients(conn, addr):
+    pass
+
+def start():
+    pass
+
+print("Server is starting!")
+start()
