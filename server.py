@@ -13,6 +13,7 @@ FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = "!DISCONNECT"
 KEY = b'This is a key123This is a key123'  # 32-byte AES key
 
+
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind(ADDR)
 
@@ -53,7 +54,6 @@ def handle_clients(conn, addr):
             # Handle disconnect message
             if decrypted_msg == DISCONNECT_MESSAGE:
                 connected = False
-                print(f"{addr} : {decrypted_msg}")
 
             # Send encrypted acknowledgment
             ack_message = "Message received"
