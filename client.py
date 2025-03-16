@@ -49,3 +49,23 @@ def receive_message(client):
         print(f"[*] Server Response: {decrypted_response}")
     except Exception as e:
         print(f"[ERROR] Failed to decrypt server response: {e}")
+
+
+# Start the client
+def start():
+    print("Connected to the server!")
+
+    while True:
+        message = input("Enter a message: ")
+
+        if message:
+            send_message(client, message)
+            receive_message(client)  # Receive server acknowledgment
+
+            if message == DISCONNECT_MESSAGE:
+                break  # Exit loop if disconnect message is sent
+
+    client.close()
+    print("Disconnected from the server.")
+
+start()
