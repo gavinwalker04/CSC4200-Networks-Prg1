@@ -10,6 +10,7 @@ PORT = 5050
 HOST = socket.gethostbyname(socket.gethostname())
 ADDR = (HOST, PORT)
 FORMAT = 'utf-8'
+DISCONNECT_MESSAGE = "!DISCONNECT"
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind(ADDR)
@@ -25,9 +26,17 @@ def handle_clients(conn, addr):
         msg = conn.recv(msg_length).decode(FORMAT) # Gets actual message
         print(f"{addr} : {msg}") # prints the message
 
+        if msg == DISCONNECT_MESSAGE:
+            connected = False
+
+        print(f"{addr} : {msg}")
+
+    conn.close()
+
 # handles new connections and sends where they need to go
 def start():
     server.listen()
+    print(f"Listening on {HOST}")
     while True:
         # when new connection occurs, stores address 
         # and object that allows us to send info back to that connection
