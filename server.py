@@ -22,14 +22,16 @@ def handle_clients(conn, addr):
     connected = True
     while connected:
         msg_length = conn.recv(HEADER).decode(FORMAT) # Gets length of message
-        msg_length = int(msg_length) # Makes length into a int
-        msg = conn.recv(msg_length).decode(FORMAT) # Gets actual message
-        print(f"{addr} : {msg}") # prints the message
 
-        if msg == DISCONNECT_MESSAGE:
-            connected = False
+        if msg_length:
+            msg_length = int(msg_length) # Makes length into a int
+            msg = conn.recv(msg_length).decode(FORMAT) # Gets actual message
+            print(f"{addr} : {msg}") # prints the message
 
-        print(f"{addr} : {msg}")
+            if msg == DISCONNECT_MESSAGE:
+                connected = False
+
+            print(f"{addr} : {msg}")
 
     conn.close()
 
@@ -48,7 +50,7 @@ def start():
         thread.start()
 
         # shows number of active client connections
-        print(f"Active Connections:  {threading.activeCount() - 1}")
+        print(f"Active Connections:  {threading.active_count() - 1}")
 
 
 print("Server is starting!")
