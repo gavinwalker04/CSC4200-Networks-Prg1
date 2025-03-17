@@ -11,9 +11,27 @@ HOST = socket.gethostbyname(socket.gethostname())
 ADDR = (HOST, PORT)
 FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = "!DISCONNECT"
+KEY = b'This is a key123This is a key123'  # 32-byte AES key
+
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind(ADDR)
+
+# AES Encryption Function
+def encrypt(plaintext, key):
+    """Encrypts a message using AES in CBC mode."""
+    iv = os.urandom(16)  # Generate a random 16-byte IV
+    cipher = AES.new(key, AES.MODE_CBC, iv)
+    ciphertext = cipher.encrypt(pad(plaintext.encode(), AES.block_size))
+    return iv + ciphertext  # Prepend IV to ciphertext for decryption
+
+# AES Decryption Function
+def decrypt(ciphertext, key):
+    """Decrypts a message using AES in CBC mode."""
+    iv = ciphertext[:16]  # Extract IV from the message
+    cipher = AES.new(key, AES.MODE_CBC, iv)
+    plaintext = unpad(cipher.decrypt(ciphertext[16:]), AES.block_size)
+    return plaintext.decode()
 
 # handles the connection between the client and the server
 def handle_clients(conn, addr):
@@ -21,16 +39,40 @@ def handle_clients(conn, addr):
 
     connected = True
     while connected:
-        msg_length = conn.recv(HEADER).decode(FORMAT) # Gets length of message
+        try:
+            msg_length = conn.recv(HEADER).decode(FORMAT)  # Get message length
+            
+            msg_length = int(msg_length)
+            encrypted_msg = conn.recv(msg_length)  # Receive encrypted message
+            
+            try:
+                decrypted_msg = decrypt(encrypted_msg, KEY)  # Decrypt message
+                print(f"{addr} : {decrypted_msg}")  # Print decrypted message
 
-        if msg_length:
-            msg_length = int(msg_length) # Makes length into a int
-            msg = conn.recv(msg_length).decode(FORMAT) # Gets actual message
-            print(f"{addr} : {msg}") # prints the message
+                with open("server_logs.txt", "a") as log_file:
+                    log_file.write(f"{addr} : {decrypted_msg}\n")
 
-            if msg == DISCONNECT_MESSAGE:
+            except Exception as e:
+                print(f"[ERROR] Failed to decrypt message from {addr}: {e}")
+                continue
+
+            # Handle disconnect message
+            if decrypted_msg == DISCONNECT_MESSAGE:
                 connected = False
-                print(f"{addr} : {msg}")
+
+            # Send encrypted acknowledgment
+            ack_message = "Message received"
+            encrypted_ack = encrypt(ack_message, KEY)
+            conn.send(encrypted_ack)  # Send encrypted acknowledgment
+
+        # Prevents a crash when a client unexpectedly disconnects
+        except ConnectionError:
+            print(f"Error! Client {addr} disconnected unexpectedly")
+            break
+
+        except Exception as e:
+            print(f"Error! Unexpected error from {addr}: {e}")
+            break
 
     conn.close()
 
