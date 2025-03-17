@@ -13,7 +13,7 @@ ADDR = (HOST, PORT)
 FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = "!DISCONNECT"
 KEY = b'This is a key123This is a key123'  # 32-byte AES key
-HMAC_KEY = b'This is an HMAC key1234567890' # 32-byte HMAC key
+HMAC_KEY = b'HMAC-Key-For-Integrity-Check123' # 32-byte HMAC key
 
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -35,6 +35,7 @@ def encrypt(plaintext, key):
 def decrypt(ciphertext, key):
     iv = ciphertext[:16]  # Extract IV from the message
     mac = ciphertext[-32:] # Extracts HMAC from last 32 bytes
+    ciphertext = ciphertext[16:-32] # Extract actual ciphertext
 
     # Verifies HMAC before decryption
     h = HMAC.new(HMAC_KEY, ciphertext, digestmod=SHA256)
@@ -44,7 +45,7 @@ def decrypt(ciphertext, key):
         raise Exception("Message Integrity Check failed")
 
     cipher = AES.new(key, AES.MODE_CBC, iv)
-    plaintext = unpad(cipher.decrypt(ciphertext[16:]), AES.block_size)
+    plaintext = unpad(cipher.decrypt(ciphertext), AES.block_size)
     return plaintext.decode()
 
 # handles the connection between the client and the server
@@ -80,7 +81,7 @@ def handle_clients(conn, addr):
             conn.send(encrypted_ack)  # Send encrypted acknowledgment
 
         # Prevents a crash when a client unexpectedly disconnects
-        except ConnectionError:
+        except ConnectionResetError:
             print(f"Error! Client {addr} disconnected unexpectedly")
             break
 
