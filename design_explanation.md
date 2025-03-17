@@ -90,3 +90,15 @@ The process is basically the same for whenever a server sends to the client
    - It decrypts the message using the **same secret key** and our decrypt function.
    - It **removes padding** to retrieve the original message.
 ---
+
+### **HMAC for Message Integrity (ON <HMAC_feature> BRANCH)** 
+To prevent **message tampering**, an **HMAC (Hash-based Message Authentication Code) is included** with each encrypted message.
+
+1. **Before Sending a Message**
+   - The client **encrypts** the message using AES.
+   - It generates an **HMAC-SHA256** of the encrypted message.
+   - The **HMAC is appended** to the encrypted data before sending.
+
+2. **On the Server Side**
+   - The server extracts the **HMAC** and **verifies it**.
+   - If the HMAC does not match, the message is **rejected**.
