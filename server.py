@@ -2,6 +2,7 @@ import socket
 import threading
 from Cryptodome.Cipher import AES
 from Cryptodome.Util.Padding import pad, unpad
+from Cryptodome.Hash import HMAC, SHA256
 import os
 
 # Configuration
@@ -12,6 +13,7 @@ ADDR = (HOST, PORT)
 FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = "!DISCONNECT"
 KEY = b'This is a key123This is a key123'  # 32-byte AES key
+HMAC_KEY = b'This is an HMAC key1234567890' # 32-byte HMAC key
 
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -19,16 +21,28 @@ server.bind(ADDR)
 
 # AES Encryption Function
 def encrypt(plaintext, key):
-    """Encrypts a message using AES in CBC mode."""
     iv = os.urandom(16)  # Generate a random 16-byte IV
     cipher = AES.new(key, AES.MODE_CBC, iv)
     ciphertext = cipher.encrypt(pad(plaintext.encode(), AES.block_size))
-    return iv + ciphertext  # Prepend IV to ciphertext for decryption
+
+    # Generate HMAC
+    h = HMAC.new(HMAC_KEY, ciphertext, digestmod=SHA256)
+    mac = h.digest()
+
+    return iv + ciphertext + mac  # Prepend IV to ciphertext and mac for decryption
 
 # AES Decryption Function
 def decrypt(ciphertext, key):
-    """Decrypts a message using AES in CBC mode."""
     iv = ciphertext[:16]  # Extract IV from the message
+    mac = ciphertext[-32:] # Extracts HMAC from last 32 bytes
+
+    # Verifies HMAC before decryption
+    h = HMAC.new(HMAC_KEY, ciphertext, digestmod=SHA256)
+    try:
+        h.verify(mac) # Check if the created matches the received
+    except ValueError:
+        raise Exception("Message Integrity Check failed")
+
     cipher = AES.new(key, AES.MODE_CBC, iv)
     plaintext = unpad(cipher.decrypt(ciphertext[16:]), AES.block_size)
     return plaintext.decode()
